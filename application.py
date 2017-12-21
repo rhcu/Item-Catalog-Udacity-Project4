@@ -112,7 +112,6 @@ def gdisconnect():
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
-    print result['status']
     if result['status'] == '200':
         del login_session['access_token']
         del login_session['gplus_id']
@@ -163,7 +162,6 @@ def showGenres():
     if 'username' not in login_session:
         return render_template('public_genres.html', genres=genres)
     else:
-        print login_session['picture']
         return render_template('genres.html', genres=genres, 
                                user=login_session['email'],
                                picture=login_session['picture'])
@@ -326,4 +324,4 @@ def showBookItemJSON(genre_id, book_id):
 if __name__ == '__main__':
     app.secret_key = 'some_very_difficult_key_to_protect_data'
     app.debug = True
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8000)

@@ -10,7 +10,12 @@
         <form action="#" method='post'>
             <input type='submit' , value='Delete'>
         </form>
-        <a href="{{url_for('showGenres')}}"> Cancel </a>
+        <button onclick="goBack()">Cancel</button>
+        <script>
+            function goBack() {
+                window.history.back();
+            }
+        </script>
     </div>
 </body>
 
