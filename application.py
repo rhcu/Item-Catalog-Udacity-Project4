@@ -14,10 +14,12 @@ import requests
 import json
 app = Flask(__name__)
 
+# CLIENT_ID for Google Signin
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "BookShelf"
 
+# Database session setup
 engine = create_engine('sqlite:///new_book_catalog.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
@@ -29,7 +31,7 @@ def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase+string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    return render_template('genres.html', STATE=state)
+    return render_template('login.html', STATE=state)
 
 
 @app.route('/gconnect', methods=['POST', 'GET'])
@@ -44,45 +46,53 @@ def gconnect():
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
-        response = make_response(json.dumps("Failed to upgrade auth code"),
+        response = make_response(json.dumps('Failed to upgrade auth code'),
                                  401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    # is access_token valid
     access_token = credentials.access_token
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
            % access_token)
     h = httplib2.Http()
+    # store the result of request
     result = json.loads(h.request(url, 'GET')[1])
+    # if result contains any errors the message is sent to server
     if result.get('error') is not None:
-        response = make_response(json.dumps('error'), 500)
+        response = make_response(json.dumps(result.get('error')), 500)
         response.headers['Content-Type'] = 'application/json'
+    # verify if this the right access_token
     gplus_id = credentials.id_token['sub']
     if result['user_id'] != gplus_id:
-        response = make_response(json.dumps("Users ids do not match"), 401)
+        response = make_response(json.dumps('Users ids do not match'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    # is this token was issued for this app
     if result['issued_to'] != CLIENT_ID:
-        response = make_response(json.dumps("Token id does not match app id"),
+        response = make_response(json.dumps('Token id does not match app id'),
                                  401)
         response.headers['Content-Type'] = 'application/json'
         return response
-    stored_credentials = login_session.get('credentials')
+    # checks is the user already logged in not to reset all info
+    stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
-    if stored_credentials is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps("User already connected"), 200)
+    if stored_access_token is not None and gplus_id == stored_gplus_id:
+        response = make_response(json.dumps('User is already connected'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
     login_session['access_token'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
+    # user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
     params = {'access_token': credentials.access_token, 'alt': 'json'}
     answer = requests.get(userinfo_url, params=params)
-    data = json.loads(answer.text)
+    data = answer.json()
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
-    user_id = getUserID(login_session['email'])
-    if user_id is None:
+    login_session['provider'] = 'google'
+    user_id = getUserID(data['email'])
+    if not user_id:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
     output = ''
@@ -96,21 +106,20 @@ def gconnect():
 def gdisconnect():
     access_token = login_session.get('access_token')
     if access_token is None:
-        response = make_response(json.dumps("User is not connected"), 401)
+        response = make_response(json.dumps('User is not connected'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print result['status']
-    if result['status'] == '400':
+    if result['status'] == '200':
         del login_session['access_token']
         del login_session['gplus_id']
         del login_session['username']
         del login_session['picture']
         del login_session['email']
         response = make_response(json.dumps("You are disconnected"), 200)
-        flash('You are disconnected')
         response.headers['Content-Type'] = 'application/json'
         return redirect('/genres')
     else:
@@ -152,12 +161,12 @@ def getUserID(email):
 def showGenres():
     genres = session.query(Genre).all()
     if 'username' not in login_session:
-        state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                        for x in xrange(32))
-        login_session['state'] = state
-        return render_template('public_genres.html', genres=genres, STATE=state)
+        return render_template('public_genres.html', genres=genres)
     else:
-        return render_template('genres.html', genres=genres)
+        print login_session['picture']
+        return render_template('genres.html', genres=genres, 
+                               user=login_session['email'],
+                               picture=login_session['picture'])
 
 
 # show the list of books for one genre
@@ -167,11 +176,9 @@ def showBooks(genre_id):
     genre = session.query(Genre).filter_by(id=genre_id).one()
     books = session.query(BookItem).filter_by(genre_id=genre_id).all()
     if 'username' not in login_session:
-        state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                        for x in xrange(32))
-        login_session['state'] = state
-        return render_template('public_books.html', genre=genre, books=books, STATE=state)
-    return render_template('books.html', books=books, genre=genre)
+        return render_template('public_books.html', genre=genre, books=books)
+    return render_template('books.html', books=books,
+                           genre=genre, user=login_session['email'])
 
 
 # add a new genre
@@ -200,7 +207,8 @@ def newBook(genre_id):
         newBook = BookItem(name=request.form['name'],
                            author=request.form['author'], 
                            description=request.form['description'], 
-                           price=request.form['price'], type=request.form['type'],
+                           price=request.form['price'],
+                           type=request.form['type'],
                            user_id=login_session['user_id'], genre_id=genre_id)
         session.add(newBook)
         session.commit()
@@ -217,7 +225,7 @@ def editGenre(genre_id):
         return redirect('/login')
     genreToEdit = session.query(Genre).filter_by(id=genre_id).one()
     if genreToEdit.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('No access');}</script><body onload='myFunction()''>"
+        return "<script>function myFunction() {alert('No access'); window.history.back();}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         if request.form['name']:
             genreToEdit.name = request.form['name']
@@ -234,10 +242,11 @@ def editGenre(genre_id):
 # edit a book
 @app.route('/genres/<int:genre_id>/books/<int:book_id>/edit/', methods=['GET', 'POST'])
 def editBook(genre_id, book_id):
-    print login_session
     if 'username' not in login_session:
         return redirect('/login')
     bookToEdit = session.query(BookItem).filter_by(id=book_id).one()
+    if bookToEdit.user_id != login_session['user_id']:
+        return "<script>function myFunction() {alert('No access');window.history.back();}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         if request.form['name']:
             bookToEdit.name = request.form['name']
@@ -256,8 +265,8 @@ def editBook(genre_id, book_id):
         flash('Book %s was successfully edited' % bookToEdit.name)
         return redirect(url_for('showBooks', genre_id=genre_id))
     else:
-        return render_template(
-                                'editBook.html', genre_id=genre_id, book_id=book_id, book=bookToEdit)
+        return render_template('editBook.html', genre_id=genre_id,
+                               book_id=book_id, book=bookToEdit)
 
 
 # delete a genre
@@ -265,7 +274,7 @@ def editBook(genre_id, book_id):
 def deleteGenre(genre_id):
     if 'username' not in login_session:
         return redirect('/login')
-    genreToDelete = session.query(Restaurant).filter_by(id=genre_id).one()
+    genreToDelete = session.query(Genre).filter_by(id=genre_id).one()
     if genreToDelete.user_id != login_session['user_id']:
         return "<script>function myFunction() {alert('No access');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
@@ -283,6 +292,8 @@ def deleteBook(genre_id, book_id):
     if 'username' not in login_session:
         return redirect('/login')
     bookToDelete = session.query(BookItem).filter_by(id=book_id).one()
+    if bookToDelete.user_id != login_session['user_id']:
+        return "<script>function myFunction() {alert('No access');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         session.delete(bookToDelete)
         session.commit()

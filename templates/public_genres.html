@@ -2,71 +2,27 @@
 
 <head>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel=stylesheet type=text/css href="static/styles.css">
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
-    </script>
-    <script src="//apis.google.com/js/platform.js?onload=start" async defer>
-    </script>
-
 </head>
 
 
 <body>
-    <br>
-    <br>
-	<p>Log into your account to add your own favorite genres</p>
-	<br>
-    <div id="signinButton">
-        <span class="g-signin" 
-		data-scope="openid email" 
-		data-clientid="806598248748-i06p76lgfa6tsmdjmnb88ntc515477n2.apps.googleusercontent.com" 
-		data-redirecturi="postmessage" 
-		data-accesstype="offline" 
-		data-cookiepolicy="single_host_origin" 
-		data-callback="signInCallback" 
-		data-approvalprompt="force">
-         </span>
+    <div class="log" style="float:right; margin-right:50px">
+        <button onclick="location.href = '{{url_for('showLogin')}}'" class="btn btn-success">
+            Log in <span class="glyphicon glyphicon-log-in"></span>
+        </button>
     </div>
+    <h1 align="center"><em>Genres</em></h1>
+    <p align="center"> Here you can find all literature genres that have already been added to BookShelf </p>
 
-    <script>
-        function signInCallback(authResult) {
-            if (authResult['code']) {
-                // Hide the sign-in button 
-                $('#signinButton').attr('style', 'display: none');
-                $.ajax({
-                    type: 'POST',
-                    url: '/gconnect?state={{STATE}}',
-                    processData: false,
-                    data: authResult['code'],
-                    contentType: 'application/octet-stream; charset=utf-8',
-                    success: function(result) {
-                        if (result) {
-                            $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
-                            setTimeout(function() {
-                                window.location.href = "/genres";
-                            }, 4000);
-
-                        } else if (authResult['error']) {
-                            console.log('There was an error: ' + authResult['error']);
-                        } else {
-                            $('#result').html('Failed to make a server-side call. Check your configuration and console.');
-                        }
-                    }
-
-                });
-            }
-        }
-    </script>
-    <div class='panel'>
-        <h1 align="center"><em>Genres</em></h1>
-        <p align="center"> Here you can find all literature genres that have already been added to BookShelf" </p>
-        {% for genre in genres %}
+    {% for genre in genres %}
+    <div class="panel" style="margin-left:30px; margin-right:30px; background:#b3ffd9; font-family:\" Times New Roman\ ", Times, serif">
         <a href="{{url_for('showBooks', genre_id = genre.id)}}">
-            <p>{{genre.name}}</p>
+            <h3>{{genre.name}}</h3>
         </a>
-        <hr class="my-4">
         <p>{{genre.description}}</p>
+        <hr>
     </div>
+
 
 
     {% endfor %}

@@ -2,31 +2,32 @@
 
 <head>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel=stylesheet type=text/css href="static/styles.css">
-
 </head>
-
 
 <body>
     <div class='pane'>
 
-        <h1 align="center"><em>Genres</em></h1>
-        <p align="center"> Here you can find all literature genres of BookShelf" </p>
-        <button onclick="location.href = '{{url_for('gdisconnect')}}'" class="btn btn-success">
-            Log out <span class="glyphicon glyphicon-log-out"></span>
-        </button>
-        <a href="{{url_for('newGenre')}}" align="right">
-            <h3> Add a New Genre <span class="glyphicon glyphicon-plus"></span></h3> </a>
-
-        {% for genre in genres %}
-        <div class="jumbotron">
+        <h1 align="center" style="font-size:40px; font-family:font-family:\" Times New Roman\ ", Times, serif"><em>Genres</em></h1>
+        <p align="center"> Here you can find all literature genres of BookShelf </p>
+        <p align="right" style="margin-right:50px"> You've successfully logged in as <em> {{user}} </em> <img src='{{picture}}' style="width: 100px; height: 100px;border-radius: 100px;"> </p>
+        <div class="btn-group" style="margin-left:30px">
+            <button onclick="location.href = '{{url_for('newGenre')}}'" class="btn btn-info">
+                Add a New Genre <span class="glyphicon glyphicon-plus"></span>
+            </button>
+            <button onclick="location.href = '{{url_for('gdisconnect')}}'" class="btn btn-success">
+                Log out <span class="glyphicon glyphicon-log-out"></span>
+            </button>
+        </div>
+        <br>
+        <br> {% for genre in genres %}
+        <div class="jumbotron" style="margin-left:30px; margin-right:30px; background:#b3ffd9; font-family:\" Times New Roman\ ", Times, serif">
             <a href="{{url_for('showBooks', genre_id = genre.id)}}">
-                <p>{{genre.name}}
+                <p style="font-size:30px"> <em>{{genre.name}}</em>
                     <p>
             </a>
             <hr class="my-4">
             <p>{{genre.description}}</p>
-            <div class="btn-group" style="float: right;">
+            <div class="btn-group" style="float: right; margin-right:30px">
                 <button onclick="location.href = '{{url_for('editGenre',genre_id = genre.id)}}'" class="btn btn-success">
                     Edit <span class="glyphicon glyphicon-pencil"></span>
                 </button>

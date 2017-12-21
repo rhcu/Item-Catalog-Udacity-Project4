@@ -1,43 +1,54 @@
 <html>
 
 <head>
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-	</head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<div class="jumbotron" style="background:#b3ffd9; font-family:\" Times New Roman\ ", Times, serif; orientation:center">
 
-<body><h1> Edit Book Information </h1>
+    <body>
+        <h1> Edit Book Information </h1>
 
-<form action="#" method = 'post'>
-
-
-	<p>Name:</p>
-		<input type ='text' size='30' name='name' value = '{{book.name }}'>
-	<p>Author:</p>
-		<input type ='text' size='30' name='author' value = '{{book.author }}'>
-	<p>Description:</p>
-		<input type ='text' size='30' name='description' value = '{{book.description}}'>
-	<p>Price:</p>
-		<input type ='text' size='30' name='price' value = '{{book.price}}'>
-	<p>Type:<p>
-
-	{% if book.type == 'eBook' %}
-		<dd><input type ='radio' name='type' value='eBook'checked >eBook</dd>
-	{%else%}
-	<dd><input type ='radio' name='type' value='eBook' >eBook</dd>
-    {% endif %}
-
-    {% if book.type == 'hardCopy' %}
-       <dd><input type ='radio' name='type' value='hardCopy' checked>Hard Copy</dd>
-
-    {%else%}
-		<dd><input type ='radio' name='type' value='hardCopy'>Hard Copy</dd>
-    {% endif %}
-
-<input type='submit' value='Edit'>
+        <form action="#" method='post'>
 
 
-<a href = '#'> Cancel </a>
+            <p>Name:</p>
+            <input type='text' size='30' name='name' value='{{book.name }}'>
+            <p>Author:</p>
+            <input type='text' size='30' name='author' value='{{book.author }}'>
+            <p>Description:</p>
+            <input type='text' size='30' name='description' value='{{book.description}}'>
+            <p>Price:</p>
+            <input type='text' size='30' name='price' value='{{book.price}}'>
+            <p>Type:
+                <p>
+
+                    {% if book.type == 'eBook' %}
+                    <dd>
+                        <input type='radio' name='type' value='eBook' checked>eBook</dd>
+                    {%else%}
+                    <dd>
+                        <input type='radio' name='type' value='eBook'>eBook</dd>
+                    {% endif %} {% if book.type == 'hardCopy' %}
+                    <dd>
+                        <input type='radio' name='type' value='hardCopy' checked>Hard Copy</dd>
+
+                    {%else%}
+                    <dd>
+                        <input type='radio' name='type' value='hardCopy'>Hard Copy</dd>
+                    {% endif %}
+
+                    <input type='submit' value='Edit'>
 
 
-</form>
+                    <button onclick="goBack()">Cancel</button>
+                    <script>
+                        function goBack() {
+                            window.history.back();
+                        }
+                    </script>
+
+        </form>
+</div>
 </body>
+
 </html>

@@ -1,23 +1,28 @@
 <html>
+
 <head>
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 </head>
+
 <body>
-    <h1>New Book</h1>
-    <form action="#" method='post'>
-        <p>Name:</p>
-        <input type='text' size='30' name='name'>
-        <p>Author:</p>
-        <input type='text' size='30' name='author'>
-        <p>Description:</p>
-        <input type='text' size='30' name='description'>
-        <p>Price:</p>
-        <input type='text' size='30' name='price'>
-        <p>Type:</p>
-        <input type='radio' name='type' value='eBook'>E-Book</br>
-        <input type='radio' name='type' value='hardCopy'>Hard Copy</br>
-        </br>
-        <input type='submit' value='Create'>
-    </form>
+    <div class="jumbotron" style="background:#b3ffd9; font-family:\" Times New Roman\ ", Times, serif; orientation:center">
+        <h1>New Book</h1>
+        <form action="#" method='post'>
+            <p>Name:</p>
+            <input type='text' size='30' name='name'>
+            <p>Author:</p>
+            <input type='text' size='30' name='author'>
+            <p>Description:</p>
+            <input type='text' size='30' name='description'>
+            <p>Price:</p>
+            <input type='text' size='30' name='price'>
+            <p>Type:</p>
+            <input type='radio' name='type' value='eBook'>E-Book</br>
+            <input type='radio' name='type' value='hardCopy'>Hard Copy</br>
+            </br>
+            <input type='submit' value='Create'>
+        </form>
+    </div>
 </body>
+
 </html>
