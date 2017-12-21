@@ -36,7 +36,7 @@ class BookItem(Base):
 	id = Column(Integer, primary_key = True)
 	author = Column(String(250))
 	description = Column(String(250))
-	type = Column(String(80), nullable=False)
+	type = Column(String(80), default='eBook')
 	price = Column(String(8))
 	user_id = Column(Integer, ForeignKey('user.id'))
 	genre_id = Column(Integer, ForeignKey('genre.id'))

@@ -105,6 +105,7 @@ def gconnect():
 @app.route('/gdisconnect/')
 def gdisconnect():
     access_token = login_session.get('access_token')
+    print access_token
     if access_token is None:
         response = make_response(json.dumps('User is not connected'), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -112,6 +113,7 @@ def gdisconnect():
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
+    print result
     if result['status'] == '200':
         del login_session['access_token']
         del login_session['gplus_id']
@@ -124,13 +126,22 @@ def gdisconnect():
     else:
         response = make_response(json.dumps("Error occured"), 400)
         response.headers['Content-Type'] = 'application/json'
-        return response
+        return redirect('/genres') 
 
 
 # User related functions for local permission system
-# Creates and adds a user to the database, returning his id
+
 def createUser(login_session):
-    user = User(name=login_session['username'], 
+    """
+    createUser(login_session): creates a user
+                               with given credentials
+    Args:
+        login_session(data-type: session) has info about
+                                          the current logged user
+    Returns:
+        user id from database
+    """
+    user = User(name=login_session['username'],
                 email=login_session['email'],
                 picture=login_session['picture'])
     session.add(user)
@@ -139,14 +150,28 @@ def createUser(login_session):
     return user_db.id
 
 
-# Searches information related to the user, user_id is given as argument
 def getUserInfo(user_id):
+    """
+    getUserInfo(user_id): searches user-info by his id
+    Args:
+        user_id(data-type: int) a unique value
+        that identifies a user in DB
+    Returns:
+        user info (username, email, picture)
+    """
     user = session.query(User).filter_by(id=user_id).one()
     return user
 
 
-# Searches user_id based on user email. None if not found
 def getUserID(email):
+    """
+    getUserID(email): searches a user by his email
+    Args:
+        email(data-type: string) a unique value
+        that identifies a user in DB
+    Returns:
+        user.id or None if no such email in DB
+    """
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -154,24 +179,38 @@ def getUserID(email):
         return None
 
 
-# show all available genres
 @app.route('/')
 @app.route('/genres/')
 def showGenres():
+    """
+    showGenres(): shows a list of genres
+    Args:
+        None
+    Returns:
+        renders a template with a list of genres
+    """
     genres = session.query(Genre).all()
     if 'username' not in login_session:
         return render_template('public_genres.html', genres=genres)
     else:
-        return render_template('genres.html', genres=genres, 
+        return render_template('genres.html', genres=genres,
                                user=login_session['email'],
                                picture=login_session['picture'])
 
 
-# show the list of books for one genre
 @app.route('/genres/<int:genre_id>/')
 @app.route('/genres/<int:genre_id>/books/')
 def showBooks(genre_id):
-    genre = session.query(Genre).filter_by(id=genre_id).one()
+    """
+    showBooks(): shows a list of books of a specific genre
+    Args:
+        genre_id (data-type: int) primary key of Genre class
+    Returns:
+        renders a template with a list of books of the genre
+    """
+    genre = session.query(Genre).filter_by(id=genre_id).one_or_none()
+    if genre is None:
+        return "No such element"
     books = session.query(BookItem).filter_by(genre_id=genre_id).all()
     if 'username' not in login_session:
         return render_template('public_books.html', genre=genre, books=books)
@@ -179,14 +218,21 @@ def showBooks(genre_id):
                            genre=genre, user=login_session['email'])
 
 
-# add a new genre
 @app.route('/genres/new/', methods=['GET', 'POST'])
 def newGenre():
+    """
+    newGenre(): creates a Genre
+    Args:
+        None
+    Returns:
+        redirects to the method that shows the
+        list of genres
+    """
     if 'username' not in login_session:
         return redirect('/login')
     if request.method == 'POST':
         newGenre = Genre(name=request.form['name'],
-                         description=request.form['description'], 
+                         description=request.form['description'],
                          user_id=login_session['user_id'])
         session.add(newGenre)
         session.commit()
@@ -196,17 +242,28 @@ def newGenre():
         return render_template('newGenre.html')
 
 
-# add a new book for a genre
-@app.route('/genres/<int:genre_id>/books/new/',  methods=['GET', 'POST'])
+@app.route('/genres/<int:genre_id>/books/new/',
+           methods=['GET', 'POST'])
 def newBook(genre_id):
+    """
+    newBook(genre_id): adds a BookItem to Genre
+    Args:
+        genre_id (data type: int): primary key of Genre class
+    Returns:
+        redirects to the method that shows the
+        list of books of genre if successful
+    """
     if 'username' not in login_session:
         return redirect('/login')
     if request.method == 'POST':
+        if 'type' not in request.form:
+            type = 'eBook'
+        else:
+            type = request.form['type']
         newBook = BookItem(name=request.form['name'],
-                           author=request.form['author'], 
-                           description=request.form['description'], 
+                           author=request.form['author'],
+                           description=request.form['description'],
                            price=request.form['price'],
-                           type=request.form['type'],
                            user_id=login_session['user_id'], genre_id=genre_id)
         session.add(newBook)
         session.commit()
@@ -216,14 +273,27 @@ def newBook(genre_id):
         return render_template('newBook.html', genre_id=genre_id)
 
 
-# edit a genre
 @app.route('/genres/<int:genre_id>/edit/', methods=['GET', 'POST'])
 def editGenre(genre_id):
+    """
+    editGenre(genre_id): edits a genre
+    Args:
+        genre_id (data type: int): primary key of Genre class
+    Returns:
+        redirects to the method that shows the
+        list of genres if successful
+    """
     if 'username' not in login_session:
         return redirect('/login')
-    genreToEdit = session.query(Genre).filter_by(id=genre_id).one()
+    genreToEdit = session.query(Genre).filter_by(id=genre_id).one_or_none()
+    if genreToEdit is None:
+        return ("<script>function myFunction() {alert('No such element');"
+                "window.history.back();}</script>"
+                "<body onload='myFunction()''>")
     if genreToEdit.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('No access'); window.history.back();}</script><body onload='myFunction()''>"
+        return ("<script>function myFunction() {alert('No access');"
+                "window.history.back();}</script>"
+                "<body onload='myFunction()''>")
     if request.method == 'POST':
         if request.form['name']:
             genreToEdit.name = request.form['name']
@@ -237,14 +307,29 @@ def editGenre(genre_id):
         return render_template('editGenre.html', genre=genreToEdit)
 
 
-# edit a book
-@app.route('/genres/<int:genre_id>/books/<int:book_id>/edit/', methods=['GET', 'POST'])
+@app.route('/genres/<int:genre_id>/books/<int:book_id>/edit/',
+           methods=['GET', 'POST'])
 def editBook(genre_id, book_id):
+    """
+    editBook(genre_id, book_id): edits a BookItem
+    Args:
+        genre_id (data type: int): id of a genre book belongs to
+        book_id (data type: int): primary key for a book
+    Returns:
+        redirects to the method that shows the list
+        of books of the genre if successful
+    """
     if 'username' not in login_session:
         return redirect('/login')
-    bookToEdit = session.query(BookItem).filter_by(id=book_id).one()
+    bookToEdit = session.query(BookItem).filter_by(id=book_id).one_or_none()
+    if bookToEdit is None:
+        return ("<script>function myFunction() {alert('No such element');"
+                "window.history.back();}</script>"
+                "<body onload='myFunction()''>")
     if bookToEdit.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('No access');window.history.back();}</script><body onload='myFunction()''>"
+        return ("<script>function myFunction()"
+                "{alert('No access');window.history.back();}"
+                "</script><body onload='myFunction()''>")
     if request.method == 'POST':
         if request.form['name']:
             bookToEdit.name = request.form['name']
@@ -267,14 +352,28 @@ def editBook(genre_id, book_id):
                                book_id=book_id, book=bookToEdit)
 
 
-# delete a genre
 @app.route('/genres/<int:genre_id>/delete/', methods=['GET', 'POST'])
 def deleteGenre(genre_id):
+    """
+    deleteGenre(genre_id): deletes a Genre
+    Args:
+        genre_id (data type: int): primary key of genre
+    Returns:
+        redirects to the method that shows the
+        list of genres if successful
+    """
     if 'username' not in login_session:
         return redirect('/login')
-    genreToDelete = session.query(Genre).filter_by(id=genre_id).one()
+    genreToDelete = session.query(Genre).filter_by(id=genre_id).one_or_none()
+    if genreToDelete is None:
+        return ("<script>function myFunction() {alert('No such element');"
+                "window.history.back();}</script>"
+                "<body onload='myFunction()''>")
     if genreToDelete.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('No access');}</script><body onload='myFunction()''>"
+        return ("<script>function myFunction()"
+                "{alert('No access');"
+                "window.history.back();"
+                "}</script><body onload='myFunction()''>")
     if request.method == 'POST':
         session.delete(genreToDelete)
         session.commit()
@@ -284,14 +383,29 @@ def deleteGenre(genre_id):
         return render_template('deleteGenre.html', genre=genreToDelete)
 
 
-# delete a book 
-@app.route('/genres/<int:genre_id>/books/<int:book_id>/delete/',  methods=['GET', 'POST'])
+@app.route('/genres/<int:genre_id>/books/<int:book_id>/delete/',
+           methods=['GET', 'POST'])
 def deleteBook(genre_id, book_id):
+    """
+    deleteBook(genre_id, book_id): deletes a BookItem
+    Args:
+        genre_id (data type: int): id of a genre book belongs to
+        book_id (data type: int): primary key for a book
+    Returns:
+        redirects to the method that shows the
+        list of books of genre if successful
+    """
     if 'username' not in login_session:
         return redirect('/login')
-    bookToDelete = session.query(BookItem).filter_by(id=book_id).one()
+    bookToDelete = session.query(BookItem).filter_by(id=book_id).one_or_none()
+    if bookToDelete is None:
+        return ("<script>function myFunction() {alert('No such element');"
+                "window.history.back();"
+                "window.history.back();}</script>"
+                "<body onload='myFunction()''>")
     if bookToDelete.user_id != login_session['user_id']:
-        return "<script>function myFunction() {alert('No access');}</script><body onload='myFunction()''>"
+        return ("<script>function myFunction()"
+                "{alert('No access');}</script><body onload='myFunction()''>")
     if request.method == 'POST':
         session.delete(bookToDelete)
         session.commit()
@@ -310,14 +424,18 @@ def genresJSON():
 
 @app.route('/genres/<int:genre_id>/books/JSON/')
 def showBooksJSON(genre_id):
-    genre = session.query(Genre).filter_by(id=genre_id).one()
+    genre = session.query(Genre).filter_by(id=genre_id).one_or_none()
+    if genre is None:
+        return "No such element."
     books = session.query(BookItem).filter_by(genre_id=genre_id).all()
     return jsonify(books=[b.serialize for b in books])
 
 
 @app.route('/genres/<int:genre_id>/books/<int:book_id>/JSON/')
 def showBookItemJSON(genre_id, book_id):
-    Book_Item = session.query(BookItem).filter_by(id=book_id).one()
+    Book_Item = session.query(BookItem).filter_by(id=book_id).one_or_none()
+    if Book_Item is None:
+        return "No such element."
     return jsonify(Book_Item=Book_Item.serialize)
 
 

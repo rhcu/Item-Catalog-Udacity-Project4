@@ -5,6 +5,18 @@
 </head>
 
 <body>
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <script>
+        var messages = {
+            {
+                messages | safe
+            }
+        };
+        for (var i = 0; i < messages.length; i++) {
+            alert(messages[i]);
+        }
+    </script>
+    {% endif %} {% endwith %}
     <div class='pane'>
 
         <h1 align="center" style="font-size:40px; font-family:font-family:\" Times New Roman\ ", Times, serif"><em>Genres</em></h1>
@@ -36,10 +48,7 @@
                 </button>
             </div>
         </div>
-
-
         {% endfor %}
-
     </div>
 </body>
 
