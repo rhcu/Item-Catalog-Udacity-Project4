@@ -126,7 +126,7 @@ def gdisconnect():
     else:
         response = make_response(json.dumps("Error occured"), 400)
         response.headers['Content-Type'] = 'application/json'
-        return redirect('/genres') 
+        return redirect('/genres')
 
 
 # User related functions for local permission system
