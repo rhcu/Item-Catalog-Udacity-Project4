@@ -1,0 +1,100 @@
+<html>
+	
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel=stylesheet type=text/css href="static/styles.css">
+	</head>
+	<body>
+		<div class = 'pane'>
+		<h1 align = "center">{{ genre.name }} Books</h1>
+		<p align = "center">{{genre.description}}</p>
+		{% with messages = get_flashed_messages() %}
+		{% if messages %}
+		<script>
+		var messages = {{ messages | safe }};
+		for (var i=0; i<messages.length; i++) {
+        alert(messages[i]);
+		}
+		</script>
+		{% endif %}
+		{% endwith %}
+
+
+    {% if books !=[] %}
+		
+		<div class="btn-group">
+			<button onclick="location.href = '{{url_for('newBook', genre_id=genre.id)}}'" class="btn btn-warning" style="margin-left:130px">
+				Add Book <span class="glyphicon glyphicon-plus"></span>
+			</button>
+		
+			<button onclick="location.href = '{{url_for('gdisconnect')}}'" class="btn btn-success">
+				Log out <span class="glyphicon glyphicon-log-out"></span>
+			</button>
+		</div>
+	</br></br>
+	<div class="col-md-1"></div>
+	<div class="col-md-5">
+	<h2>eBooks</h2>
+
+		{% for b in books %}
+		{% if b.type == 'eBook' %}
+
+		<h3>{{b.name}}</h3>
+		<p><em>{{b.author}}</em></p>
+
+		<p>{{b.description}}</p>
+	
+
+		<p>{{b.price}}</p>
+		<div class="btn-group">
+		<button onclick="location.href='{{url_for('editBook', genre_id = genre.id, book_id=b.id ) }}'" class="btn btn-info" >
+					Edit <span class="glyphicon glyphicon-pencil"></span></button>
+		<button onclick="location.href='{{url_for('deleteBook', genre_id = genre.id, book_id=b.id) }}'" class="btn btn-info">
+					Delete <span class="glyphicon glyphicon-trash"></span></button>
+		</div>
+		<br>
+		<hr class="my-4">
+
+		{% endif %}
+
+		{% endfor %}
+		</br></br>
+	</div>
+
+	<div class="col-md-5">	
+	<h2>Hard Copy</h2>
+
+		{% for b in books %}
+		{% if b.type == 'hardCopy' %}
+
+		<h3>{{b.name}}</h3>
+		<p><em>{{b.author}}</em></p>
+		<p>{{b.description}}</p>
+	
+
+		<p>{{b.price}}</p>
+		
+		<div class="btn-group">
+		<button onclick="location.href='{{url_for('editBook', genre_id = genre.id, book_id=b.id ) }}'" class="btn btn-info" >
+					Edit <span class="glyphicon glyphicon-pencil"></span></button>
+		<button onclick="location.href='{{url_for('deleteBook', genre_id = genre.id, book_id=b.id) }}'" class="btn btn-info">
+					Delete <span class="glyphicon glyphicon-trash"></span></button>
+		</div>
+		<br>
+		<hr class="my-4">
+
+        {% endif %}
+
+		{% endfor %}
+		</br></br>
+		</div>
+	
+		{% else %}
+		<p> You currently have no books of this genre. <p>
+		<a href = "{{url_for('newBook', genre_id = genre.id )}}">Add New Book</a>
+			{% endif %}
+</div>
+	</body>
+
+</html>

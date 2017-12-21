@@ -1,0 +1,45 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel=stylesheet type=text/css href="static/styles.css">
+
+</head>
+
+
+<body>
+    <div class='pane'>
+
+        <h1 align="center"><em>Genres</em></h1>
+        <p align="center"> Here you can find all literature genres of BookShelf" </p>
+        <button onclick="location.href = '{{url_for('gdisconnect')}}'" class="btn btn-success">
+            Log out <span class="glyphicon glyphicon-log-out"></span>
+        </button>
+        <a href="{{url_for('newGenre')}}" align="right">
+            <h3> Add a New Genre <span class="glyphicon glyphicon-plus"></span></h3> </a>
+
+        {% for genre in genres %}
+        <div class="jumbotron">
+            <a href="{{url_for('showBooks', genre_id = genre.id)}}">
+                <p>{{genre.name}}
+                    <p>
+            </a>
+            <hr class="my-4">
+            <p>{{genre.description}}</p>
+            <div class="btn-group" style="float: right;">
+                <button onclick="location.href = '{{url_for('editGenre',genre_id = genre.id)}}'" class="btn btn-success">
+                    Edit <span class="glyphicon glyphicon-pencil"></span>
+                </button>
+                <button onclick="location.href = '{{url_for('deleteGenre',genre_id = genre.id)}}'" class="btn btn-success">
+                    Delete <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            </div>
+        </div>
+
+
+        {% endfor %}
+
+    </div>
+</body>
+
+</html>
