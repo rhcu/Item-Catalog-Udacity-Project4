@@ -26,27 +26,35 @@
         </br>
         <div class="col-md-1"></div>
         <div class="col-md-5">
-            <h2>eBooks <img src="http://www.bookmasters.com/Content/images/ebook_blue.png" width="30px"></h2> {% for b in books %} {% if b.type == 'eBook' %}
+            <h2>eBooks <img src="http://www.bookmasters.com/Content/images/ebook_blue.png" width="30px"></h2> 
+			{% for b in books %} 
+			{% if b.type == 'eBook' %}
             <h3>{{b.name}}</h3>
             <p><em>{{b.author}}</em>
             </p>
             <p>{{b.description}}</p>
             <p>{{b.price}}</p>
             <br>
-            <hr class="my-4"> {% endif %} {% endfor %}
+            <hr class="my-4"> 
+			{% endif %}
+			{% endfor %}
             </br>
             </br>
         </div>
 
         <div class="col-md-5">
-            <h2>Hard Copy <img src="http://wfarm4.dataknet.com/static/resources/icons/set112/3c4e918c.png" width="30px"></h2> {% for b in books %} {% if b.type == 'hardCopy' %}
+            <h2>Hard Copy <img src="http://wfarm4.dataknet.com/static/resources/icons/set112/3c4e918c.png" width="30px"></h2> 
+			{% for b in books %}
+			{% if b.type == 'hardCopy' %}
             <h3>{{b.name}}</h3>
             <p><em>{{b.author}}</em>
             </p>
             <p>{{b.description}}</p>
             <p>{{b.price}}</p>
             <br>
-            <hr class="my-4"> {% endif %} {% endfor %}
+            <hr class="my-4">
+			{% endif %} 
+			{% endfor %}
             </br>
             </br>
         </div>
